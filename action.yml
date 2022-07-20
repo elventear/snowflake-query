@@ -32,6 +32,10 @@ inputs:
   query:
     required: true
     description: Multiline string with queries to execute on Snowflake
+outputs:
+  rows:
+    description: JSON Array of ROWS of last query statement
+
 runs:
   using: 'node16'
   main: 'dist/index.js'
