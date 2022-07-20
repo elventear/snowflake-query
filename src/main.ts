@@ -1,5 +1,5 @@
 import * as core from '@actions/core'
-import {ConnectionOptions, createConnection} from 'snowflake-sdk'
+import {Connection, ConnectionOptions, createConnection} from 'snowflake-sdk'
 import {handleConnection} from './snowflake'
 
 interface Inputs {
@@ -76,13 +76,19 @@ async function runSnowflake(): Promise<void> {
     options.authenticator = 'SNOWFLAKE'
   }
 
-  await createConnection(options).connectAsync(async (err, conn) => {
+  let connection: Connection | null = null
+  createConnection(options).connect((err, conn) => {
     if (err) {
       core.setFailed(`Connection failure: ${err.message}`)
     } else {
-      await handleConnection(conn, queries)
+      connection = conn
     }
   })
+  if (connection) {
+    await handleConnection(connection, queries)
+  } else {
+    core.setFailed('Did not obtain connection')
+  }
 }
 
 runSnowflake()

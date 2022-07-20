@@ -9,7 +9,7 @@ export async function handleConnection(
   connection: Connection,
   queries: string[]
 ): Promise<void> {
-  core.startGroup('Snowlflake Queries')
+  core.startGroup('Snowflake queries')
 
   const lastRows: unknown[] = []
   let failed = false
