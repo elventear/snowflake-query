@@ -70,6 +70,12 @@ async function runSnowflake(): Promise<void> {
     return
   }
 
+  if (options.privateKeyPath && options.privateKeyPass) {
+    options.authenticator = 'SNOWFLAKE_JWT'
+  } else {
+    options.authenticator = 'SNOWFLAKE'
+  }
+
   await createConnection(options).connectAsync(async (err, conn) => {
     if (err) {
       core.setFailed(`Connection failure: ${err.message}`)
