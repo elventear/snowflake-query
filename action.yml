@@ -23,10 +23,10 @@ inputs:
   password:
     required: false
     description: Use password authentication
-  private-key-path:
+  private_key_path:
     required: false
     description: Path to private key for authentication
-  private-key-pass:
+  private_key_pass:
     required: false
     description: Password for private key
   query:
