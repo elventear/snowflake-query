@@ -1,5 +1,6 @@
 .idea/
 dist/xdg-open
+.envrc.secret
 
 # Dependency directory
 node_modules

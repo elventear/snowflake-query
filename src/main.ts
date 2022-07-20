@@ -1,5 +1,5 @@
 import * as core from '@actions/core'
-import {Connection, ConnectionOptions, createConnection} from 'snowflake-sdk'
+import {ConnectionOptions, createConnection} from 'snowflake-sdk'
 import {handleConnection} from './snowflake'
 
 interface Inputs {
@@ -23,8 +23,8 @@ export const INPUTS: Inputs = {
   account: 'account',
   database: 'database',
   password: 'password',
-  privkey_pass: 'private-key-pass',
-  privkey_path: 'private-key-path',
+  privkey_pass: 'private_key_pass',
+  privkey_path: 'private_key_path',
   query: 'query',
   role: 'role',
   schema: 'schema',
@@ -53,7 +53,7 @@ async function runSnowflake(): Promise<void> {
   const options: ConnectionOptions = {
     account: requiredInput(INPUTS.account),
     database: requiredInput(INPUTS.database),
-    password: optionalInput(INPUTS.database),
+    password: optionalInput(INPUTS.password),
     privateKeyPath: optionalInput(INPUTS.privkey_path),
     privateKeyPass: optionalInput(INPUTS.privkey_pass),
     role: optionalInput(INPUTS.role),
@@ -76,19 +76,13 @@ async function runSnowflake(): Promise<void> {
     options.authenticator = 'SNOWFLAKE'
   }
 
-  let connection: Connection | null = null
   createConnection(options).connect((err, conn) => {
     if (err) {
       core.setFailed(`Connection failure: ${err.message}`)
     } else {
-      connection = conn
+      handleConnection(conn, queries)
     }
   })
-  if (connection) {
-    await handleConnection(connection, queries)
-  } else {
-    core.setFailed('Did not obtain connection')
-  }
 }
 
 runSnowflake()

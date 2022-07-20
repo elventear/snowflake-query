@@ -17,45 +17,41 @@ export async function handleConnection(
     if (failed) {
       break
     }
+    let finished = false
+    // clear array
+    lastRows.length = 0
 
     core.info(`Running query: ${query}`)
     const statement = connection.execute({
       sqlText: query,
-      streamResult: true,
-      complete(err, stmt) {
-        if (err) {
-          core.setFailed(`Query error: ${err.message}`)
-          return
-        }
-
-        stmt
-          .streamRows()
-          .on('data', function (row) {
-            lastRows.push(row)
-            if (core.isDebug()) {
-              core.debug(`Row: ${row}`)
-            }
-          })
-          // eslint-disable-next-line no-shadow
-          .on('error', function (err) {
-            failed = true
-            core.setFailed(`Error consuming rows: ${err.message}`)
-            // eslint-disable-next-line no-shadow
-            statement.cancel(function (err) {
-              if (err) {
-                core.error(`Failed to cancel statement: ${err.message}`)
-              }
-            })
-          })
-      }
+      streamResult: true
     })
 
-    while (!failed && statement.getStatus() !== StatementStatus.Complete) {
+    statement
+      .streamRows()
+      .on('error', function (err) {
+        failed = true
+        core.setFailed(`Error consuming rows: ${err.message}`)
+        // eslint-disable-next-line no-shadow
+        statement.cancel(function (err) {
+          if (err) {
+            core.error(`Failed to cancel statement: ${err.message}`)
+          }
+        })
+      })
+      .on('data', function (row) {
+        lastRows.push(row)
+        if (core.isDebug()) {
+          core.debug(`Row: ${row}`)
+        }
+      })
+      .on('end', function () {
+        finished = true
+      })
+
+    while (!failed && !finished) {
       await sleep(500)
     }
-
-    // clear array
-    lastRows.length = 0
   }
   core.endGroup()
 
