@@ -1,19 +1,59 @@
 import * as core from '@actions/core'
-import {wait} from './wait'
+import {ConnectionOptions, createConnection} from 'snowflake-sdk'
+import {handleConnection} from './snowflake'
 
-async function run(): Promise<void> {
-  try {
-    const ms: string = core.getInput('milliseconds')
-    core.debug(`Waiting ${ms} milliseconds ...`) // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
+const ACCOUNT = 'account'
+const DATABASE = 'database'
+const PASSWORD = 'password'
+const PRIVATE_KEY_PATH = 'private-key-path'
+const PRIVATE_KEY_PASS = 'private-key-pass'
+const ROLE = 'role'
+const SCHEMA = 'schema'
+const USERNAME = 'username'
+const WAREHOUSE = 'warehouse'
+const QUERY = 'query'
 
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
-
-    core.setOutput('time', new Date().toTimeString())
-  } catch (error) {
-    if (error instanceof Error) core.setFailed(error.message)
-  }
+function requiredInput(name: string): string {
+  return core.getInput(name, {trimWhitespace: true, required: true})
 }
 
-run()
+function optionalInput(name: string): string | undefined {
+  const input = core.getInput(name, {trimWhitespace: true, required: false})
+  if (input) {
+    return input
+  }
+
+  return undefined
+}
+
+async function runSnowflake(): Promise<void> {
+  const options: ConnectionOptions = {
+    account: requiredInput(ACCOUNT),
+    database: requiredInput(DATABASE),
+    password: optionalInput(PASSWORD),
+    privateKeyPath: optionalInput(PRIVATE_KEY_PATH),
+    privateKeyPass: optionalInput(PRIVATE_KEY_PASS),
+    role: optionalInput(ROLE),
+    schema: requiredInput(SCHEMA),
+    username: requiredInput(USERNAME),
+    warehouse: requiredInput(WAREHOUSE),
+    clientSessionKeepAlive: false
+  }
+
+  const queries = core.getMultilineInput(QUERY, {required: true})
+
+  if (!options.password && !options.privateKeyPass && !options.privateKeyPath) {
+    core.setFailed('Password or private key authentication required')
+    return
+  }
+
+  await createConnection(options).connectAsync(async (err, conn) => {
+    if (err) {
+      core.setFailed(`Connection failure: ${err.message}`)
+    } else {
+      await handleConnection(conn, queries)
+    }
+  })
+}
+
+runSnowflake()

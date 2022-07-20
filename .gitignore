@@ -1,3 +1,6 @@
+.idea/
+dist/xdg-open
+
 # Dependency directory
 node_modules
 

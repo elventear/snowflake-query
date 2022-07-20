@@ -1,0 +1,62 @@
+import * as core from '@actions/core'
+import {Connection, StatementStatus} from 'snowflake-sdk'
+
+const sleep = async (waitTime: number): Promise<void> =>
+  new Promise(resolve => setTimeout(resolve, waitTime))
+
+export async function handleConnection(
+  connection: Connection,
+  queries: string[]
+): Promise<void> {
+  const connId = connection.getId()
+
+  core.startGroup('Snowlflake Queries')
+
+  const lastRows: any[] = []
+  let failed = false
+  for (const query of queries) {
+    if (failed) {
+      break
+    }
+
+    core.info(`Running query: ${query}`)
+    const statement = connection.execute({
+      sqlText: query,
+      streamResult: true,
+      complete(err, stmt) {
+        if (err) {
+          core.setFailed(`Query error: ${err.message}`)
+          return
+        }
+
+        stmt
+          .streamRows()
+          .on('data', function (row) {
+            lastRows.push(row)
+            if (core.isDebug()) {
+              core.debug(`Row: ${row}`)
+            }
+          })
+          .on('error', function (err) {
+            failed = true
+            core.setFailed(`Error consuming rows: ${err.message}`)
+            statement.cancel(function (err) {
+              if (err) {
+                core.error(`Failed to cancel statement: ${err.message}`)
+              }
+            })
+          })
+      }
+    })
+
+    while (!failed && statement.getStatus() !== StatementStatus.Complete) {
+      await sleep(500)
+    }
+
+    // clear array
+    lastRows.length = 0
+  }
+  core.endGroup()
+
+  core.setOutput('rows', lastRows)
+}

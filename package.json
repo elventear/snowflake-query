@@ -25,7 +25,9 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@actions/core": "^1.6.0"
+    "@actions/core": "^1.9.0",
+    "@types/snowflake-sdk": "^1.6.7",
+    "snowflake-sdk": "^1.6.11"
   },
   "devDependencies": {
     "@types/node": "^16.10.5",

@@ -1,11 +1,37 @@
-name: 'Your name here'
+name: Snow Flake Query
 description: 'Provide a description here'
-author: 'Your name or organization here'
+author: github.com/elventear
 inputs:
-  milliseconds: # change this
+  account:
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+    description: Snowflake Account
+  username:
+    required: true
+    description: Snowflake Username
+  database:
+    required: true
+    description: Snowflake Database
+  schema:
+    required: true
+    description: Snowflake Schema
+  warehouse:
+    required: true
+    description: Snowflake Warehouse
+  role:
+    required: false
+    description: Snowflake Role
+  password:
+    required: false
+    description: Use password authentication
+  private-key-path:
+    required: false
+    description: Path to private key for authentication
+  private-key-pass:
+    required: false
+    description: Password for private key
+  query:
+    required: true
+    description: Multiline string with queries to execute on Snowflake
 runs:
   using: 'node16'
   main: 'dist/index.js'
